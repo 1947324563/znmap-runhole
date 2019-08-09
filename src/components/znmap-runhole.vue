@@ -3,14 +3,15 @@
     <div class="container">
         <v-chart ref="instance"
                  :options="opt"
-                 @click="initChartOpt"
+                @click="initChartOpt"
                  autoresize></v-chart>
+
     </div>
 </template>
 <script>
-    import {cityMap} from '@/mapjson/map/china-main-city-map.js';
+    import {cityMap} from '@/static/map/china-main-city-map.js';
+    import chinaMapjson from '@/static/map/100000.json'
     import vEcharts from 'vue-echarts';
-    import { sliderOptions } from '../mixin/sliderOptions';
     import axios from 'axios';
     //中国地图（第一级地图）的ID、Name、Json数据
     // var chinaId = 100000;
@@ -32,23 +33,23 @@
         props: {
             options: {
                 type: Object,
-                required: true
+                // required: true
             },
             isSetOptions: {
                 type: Boolean,
-                default: true
+                // default: true
             },
             isShowLoading: {
                 type: Boolean,
-                default: false
+                // default: false
             },
             h: {
                 type: Number,
-                required: true
+                // required: true
             },
             w: {
                 type: Number,
-                required: true
+                // required: true
             }
         },
 
@@ -60,8 +61,22 @@
                 mapStack: [],
                 parentId: null,
                 parentName: null,
-                opt:'',
+                opt:{series: [
+                        {
+                            type: 'map',
+                            map: name,
+                            itemStyle: {
+                                normal: {
+                                    areaColor: 'rgba(23, 27, 57,0)',
+                                    borderColor: '#1dc199',
+                                    borderWidth: 1
+                                }
+                            },
+                            data: this.initMapData(chinaMapjson)
+                        }
+                    ]},
                 myChart:this.$refs.instance,
+                getHost:window.location.host,
             };
         },
         mounted(){
@@ -69,11 +84,12 @@
         },
         methods: {
             initChartOpt(params){
+                console.log(params)
                 let cityId = cityMap[params.name];
                 if (cityId) {
                     //代表有下级地图
                     axios
-                        .get('http://bivue.24e.test/static/map/' + cityId + '.json', {})
+                        .get(this.getHost + '/mapjson/map/' + cityId + '.json', {})
                         .then(response => {
                             // console.log(response);
 
@@ -95,8 +111,9 @@
                 }
             },
             initChart(id){
-                axios.get('http://bivue.24e.test/static/map/' + this.chinaId + '.json', {}).then(response => {
-                    this.mapJson = response.data;
+                // console.log(chinaMapjson,'address')
+                // axios.get('http://192.168.199.249' + '/static/map/' + this.chinaId + '.json', {}).then(response => {
+                    this.mapJson = chinaMapjson;
                     this.chinaJson = this.mapJson;
                     this.registerAndsetOption(this.myChart, this.chinaId, this.chinaName, this.mapJson, false);
                     this.parentId = this.chinaId;
@@ -134,9 +151,10 @@
                     // //     registerAndsetOption(myChart,chinaId,'china',chinaJson,false)
                     // // });
                     // });
-                });
+                // });
             },
             registerAndsetOption(myChart, id, name, mapJson, flag){
+                console.log(name)
                 vEcharts.registerMap(name, mapJson);
                 this.opt = {series: [
                         {
@@ -152,6 +170,7 @@
                             data: this.initMapData(mapJson)
                         }
                     ],};
+                console.log(this.opt)
                 if (flag) {
                     //往mapStack里添加parentId，parentName,返回上一级使用
                     this.mapStack.push({
@@ -261,8 +280,5 @@
     }
 </script>
 <style scoped>
-    .bg {
-        background-image: url("~echartsBg/area.png");
-        background-repeat: no-repeat;
-    }
+
 </style>
